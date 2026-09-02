@@ -54,6 +54,7 @@
     cursor: pointer;
   }
   #editBar span { opacity: 0.7; }
+  #editBar .selected-label { color: #c9a45c; font-weight: 600; min-width: 90px; }
   #layoutOutput {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -80,7 +81,10 @@
 <div id="_preload_div_">Loading…</div>
 
 <div id="editBar">
-  <span>Positioning mode — drag pieces into place, then:</span>
+  <span>Positioning mode — drag pieces, tap one to select it, then resize:</span>
+  <span class="selected-label" id="selectedLabel">none selected</span>
+  <button onclick="adjustScale(-0.05)">− Smaller</button>
+  <button onclick="adjustScale(0.05)">+ Bigger</button>
   <button onclick="exportLayout()">Copy Layout</button>
 </div>
 <pre id="layoutOutput"></pre>
@@ -194,6 +198,9 @@ function enableDragAndDoubleTap(target) {
   var DOUBLE_TAP_WINDOW = 350;
 
   target.on('mousedown', function(evt) {
+    selectedPieceId = target.name;
+    updateSelectedLabel();
+
     var offsetX = target.x - evt.stageX;
     var offsetY = target.y - evt.stageY;
     startX = evt.stageX;
@@ -242,8 +249,23 @@ function makeResponsive() {
 }
 
 /* ---- Positioning mode: add ?edit=1 to the URL to turn this on ---- */
+var selectedPieceId = null;
+
 if (window.location.search.includes("edit=1")) {
   document.getElementById("editBar").classList.add("active");
+}
+
+function updateSelectedLabel() {
+  var label = document.getElementById("selectedLabel");
+  label.textContent = selectedPieceId ? selectedPieceId : "none selected";
+}
+
+function adjustScale(delta) {
+  if (!selectedPieceId || !pieceObjects[selectedPieceId]) return;
+  var bmp = pieceObjects[selectedPieceId];
+  var newScale = Math.max(0.02, bmp.scaleX + delta);
+  bmp.scaleX = bmp.scaleY = newScale;
+  stage.update();
 }
 
 function exportLayout() {
